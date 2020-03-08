@@ -106,4 +106,4 @@ generated
 
 .idea
 prisma.yml
-src/env.js
+.env
