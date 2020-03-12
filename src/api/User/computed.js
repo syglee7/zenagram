@@ -1,25 +1,46 @@
-import {prisma} from "../../../generated/prisma-client";
+import { prisma } from "../../../generated/prisma-client";
 
 export default {
     User: {
-        fullName: parent => {
-            return `${parent.firstName} ${parent.lastName}`;
-        },
-
+        posts: ({ id }) => prisma.user({ id }).posts(),
+        following: ({ id }) => prisma.user({ id }).following(),
+        followers: ({ id }) => prisma.user({ id }).followers(),
+        likes: ({ id }) => prisma.user({ id }).likes(),
+        comments: ({ id }) => prisma.user({ id }).comments(),
+        chats: ({ id }) => prisma.user({ id }).chats(),
+        postsCount: ({ id }) =>
+            prisma
+                .postsConnection({ where: { user: { id } } })
+                .aggregate()
+                .count(),
+        followingCount: ({ id }) =>
+            prisma
+                .usersConnection({ where: { followers_some: { id } } })
+                .aggregate()
+                .count(),
+        followersCount: ({ id }) =>
+            prisma
+                .usersConnection({ where: { following_none: { id } } })
+                .aggregate()
+                .count(),
+        fullName: parent => `${parent.firstName} ${parent.lastName}`,
         isFollowing: async (parent, _, { request }) => {
             const { user } = request;
             const { id: parentId } = parent;
             try {
-                const exist =  await prisma.$exists.user({
+                return prisma.$exists.user({
                     AND: [
-                        {id: parentId},
-                        {followers_some: {id: user.id}}
+                        {
+                            id: user.id
+                        },
+                        {
+                            following_some: {
+                                id: parentId
+                            }
+                        }
                     ]
                 });
-
-                return exist;
-            } catch (e) {
-                console.error(e);
+            } catch {
                 return false;
             }
         },
@@ -28,26 +49,5 @@ export default {
             const { id: parentId } = parent;
             return user.id === parentId;
         }
-    },
-    Post: {
-        isLiked: (parent, _, { request }) => {
-            const { user } = request;
-            const { id } = parent;
-            return prisma.$exists.like({
-                AND: [
-                    {
-                        user: {
-                            id: user.id
-                        }
-                    },
-                    {
-                        post: {
-                            id
-                        }
-                    }
-                ]
-            })
-
-        }
     }
-}
+};

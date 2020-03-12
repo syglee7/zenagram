@@ -1,6 +1,9 @@
 type User {
   id: ID! @id
   avatar: String
+  @default(
+        value: "http://test.exocash.net/assets/images/avatar-person.svg"
+  )
   username: String! @unique
   email: String! @unique
   firstName: String @default(value: "")
